@@ -1,402 +1,1871 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QuantumRoute | Emergency Intelligence</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <title>QuantumRoute | Emergency Route Optimization</title>
 
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #080d1b;
-      --panel: #111b30;
-      --line: #263b59;
-      --cyan: #52e5ff;
-      --purple: #a78bfa;
-      --text: #f1f5ff;
-      --muted: #a6b5cc;
-    }
+    <!-- Leaflet map library -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
 
-    * { box-sizing: border-box; }
+    <style>
+        :root {
+            --primary: #173b68;
+            --primary-light: #eaf1fb;
+            --accent: #e63946;
+            --success: #16845b;
+            --warning: #a96300;
+            --background: #f4f7fb;
+            --card: #ffffff;
+            --text: #233247;
+            --muted: #6b7789;
+            --border: #dce4ef;
+        }
 
-    body {
-      margin: 0;
-      background: radial-gradient(ellipse at top, #17294b, var(--bg) 60%);
-      color: var(--text);
-      font-family: Arial, sans-serif;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    header {
-      padding: 24px 5%;
-      border-bottom: 1px solid var(--line);
-    }
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
 
-    header h1 {
-      margin: 0;
-      color: var(--cyan);
-      letter-spacing: 2px;
-    }
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 22px 6%;
+        }
 
-    header p { color: var(--muted); margin-bottom: 0; }
+        .brand {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 0.4px;
+        }
 
-    main { max-width: 1200px; margin: auto; padding: 24px 16px; }
+        .brand span {
+            color: #8fd3ff;
+        }
 
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(260px, 340px) 1fr;
-      gap: 18px;
-    }
+        header p {
+            margin: 8px 0 0;
+            color: #e0eaf7;
+            line-height: 1.5;
+        }
 
-    .panel {
-      background: rgba(17, 27, 48, .96);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 18px;
-      min-width: 0;
-    }
+        .container {
+            width: 92%;
+            max-width: 1400px;
+            margin: 24px auto;
+        }
 
-    h2 { font-size: 18px; margin-top: 0; }
-    label { display: block; margin: 15px 0 7px; color: var(--muted); }
+        .page-heading {
+            margin-bottom: 20px;
+        }
 
-    input, select, button {
-      width: 100%;
-      border-radius: 9px;
-      padding: 12px;
-      font-size: 14px;
-    }
+        .page-heading h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+        }
 
-    input, select {
-      background: #091326;
-      color: var(--text);
-      border: 1px solid #334766;
-    }
+        .page-heading p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
 
-    .check {
-      display: flex;
-      gap: 9px;
-      align-items: center;
-      margin-top: 14px;
-      color: var(--text);
-    }
+        .layout {
+            display: grid;
+            grid-template-columns: 350px minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
 
-    .check input { width: auto; }
+        .card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 4px 18px rgba(25, 48, 78, 0.06);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
 
-    button {
-      margin-top: 18px;
-      border: 0;
-      background: linear-gradient(90deg, #18c9e8, #8b78ff);
-      color: #07111e;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        .card h2 {
+            margin: 0 0 18px;
+            font-size: 19px;
+        }
 
-    button:disabled { opacity: .55; cursor: wait; }
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+        }
 
-    #map {
-      width: 100%;
-      height: 430px;
-      border-radius: 12px;
-      border: 1px solid #355879;
-      overflow: hidden;
-    }
+        .field {
+            margin-bottom: 17px;
+        }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 15px;
-    }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
 
-    .stat {
-      background: #091326;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 12px;
-      overflow-wrap: anywhere;
-    }
+        input,
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: var(--text);
+        }
 
-    .stat small { color: var(--muted); display: block; }
-    .stat strong { color: var(--cyan); display: block; margin-top: 8px; }
+        input:focus,
+        select:focus {
+            outline: 2px solid #b8d4ff;
+            border-color: #4b82cb;
+        }
 
-    .notice {
-      padding: 12px;
-      border-radius: 9px;
-      background: #0b2636;
-      border: 1px solid #236078;
-      line-height: 1.5;
-      margin-top: 14px;
-    }
+        .help-text {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+            margin-top: 6px;
+        }
 
-    .warning {
-      background: #382516;
-      border-color: #a66b28;
-    }
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
 
-    .muted { color: var(--muted); line-height: 1.5; font-size: 13px; }
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
 
-    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
-    .legend span { color: var(--muted); font-size: 12px; }
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
 
-    footer {
-      text-align: center;
-      color: var(--muted);
-      padding: 18px;
-      font-size: 12px;
-    }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
 
-    @media (max-width: 780px) {
-      .grid { grid-template-columns: 1fr; }
-      #map { height: 350px; }
-      .stats { grid-template-columns: 1fr; }
-    }
-  </style>
+        .btn-primary:hover {
+            background: #0e2d52;
+        }
+
+        .btn-secondary {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: #dbe8fb;
+        }
+
+        .btn-gps {
+            width: 100%;
+            background: #edf8f2;
+            color: var(--success);
+            border: 1px solid #c8e8d7;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .vehicle-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .vehicle-option {
+            padding: 14px 8px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            background: white;
+            font-weight: normal;
+        }
+
+        .vehicle-option input {
+            width: auto;
+            margin: 0 0 8px;
+        }
+
+        .vehicle-option:has(input:checked) {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .vehicle-icon {
+            display: block;
+            font-size: 25px;
+            margin-bottom: 7px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin: 14px 0 18px;
+        }
+
+        .checkbox-row input {
+            width: auto;
+            margin-top: 3px;
+        }
+
+        .checkbox-row label {
+            margin: 0;
+            line-height: 1.5;
+            font-weight: normal;
+        }
+
+        .workflow-note {
+            background: #f0f5fc;
+            border-left: 4px solid #5285c5;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .map-card {
+            padding: 12px;
+        }
+
+        #map {
+            width: 100%;
+            height: 440px;
+            border-radius: 10px;
+            background: #e8edf3;
+        }
+
+        .map-caption {
+            padding: 10px 4px 2px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .status {
+            display: none;
+            padding: 13px 15px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .status.info {
+            display: block;
+            background: #eaf2ff;
+            color: #234e87;
+        }
+
+        .status.error {
+            display: block;
+            background: #fff0f0;
+            color: #a52222;
+        }
+
+        .status.success {
+            display: block;
+            background: #eaf8f0;
+            color: #146b46;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .metric {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            background: white;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .metric-unit {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .section-title h2 {
+            margin: 0;
+        }
+
+        .route-list {
+            display: grid;
+            gap: 13px;
+        }
+
+        .route-card {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 16px;
+            background: white;
+        }
+
+        .route-card.best {
+            border: 2px solid var(--success);
+            background: #f8fffb;
+        }
+
+        .route-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .route-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 20px;
+            padding: 5px 9px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: normal;
+        }
+
+        .badge-best {
+            background: #d9f4e5;
+            color: #126541;
+        }
+
+        .badge-warning {
+            background: #fff0d9;
+            color: #885000;
+        }
+
+        .badge-neutral {
+            background: #edf1f6;
+            color: #4c5b70;
+        }
+
+        .route-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .route-metric {
+            background: #f3f6fa;
+            padding: 10px;
+            border-radius: 7px;
+        }
+
+        .route-metric strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .route-metric span {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .route-detail {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+            margin: 10px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .route-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .route-actions button {
+            padding: 9px 12px;
+            font-size: 12px;
+        }
+
+        .hospital-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .hospital-item {
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 13px;
+        }
+
+        .hospital-item strong {
+            display: block;
+            margin-bottom: 7px;
+        }
+
+        .hospital-item p {
+            margin: 4px 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 25px 15px;
+            color: var(--muted);
+            line-height: 1.6;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ead9b6;
+            border-radius: 9px;
+            background: #fff9ed;
+            color: #75521c;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        @media (max-width: 950px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            #map {
+                height: 380px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            header {
+                padding: 18px 5%;
+            }
+
+            .brand {
+                font-size: 24px;
+            }
+
+            .container {
+                width: 94%;
+                margin: 16px auto;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            #map {
+                height: 320px;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-value {
+                font-size: 22px;
+            }
+
+            .route-metrics {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .route-top {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 
 <body>
+
 <header>
-  <h1>QUANTUMROUTE</h1>
-  <p>Beyond Navigation. Intelligent Emergency Decisions.</p>
+    <div class="brand">Quantum<span>Route</span></div>
+    <p>Quantum-Inspired AI for Emergency Vehicle Route Optimization</p>
 </header>
 
-<main>
-  <div class="grid">
-    <section>
-      <div class="panel">
-        <h2>Emergency Mission</h2>
+<main class="container">
 
-        <label for="start">Starting location</label>
-        <input id="start" value="PSG Hospitals, Peelamedu, Coimbatore"
-          placeholder="Enter a place in Coimbatore">
-
-        <label for="destination">Destination hospital</label>
-        <select id="destination">
-          {% for name in hospitals %}
-          <option value="{{ name }}">{{ name }}</option>
-          {% endfor %}
-        </select>
-
-        <label for="emergency">Emergency priority</label>
-        <select id="emergency">
-          <option>Critical</option>
-          <option selected>High</option>
-          <option>Normal</option>
-        </select>
-
-        <label class="check">
-          <input type="checkbox" id="traffic">
-          Simulate heavy traffic
-        </label>
-
-        <label class="check">
-          <input type="checkbox" id="blocked">
-          Simulate a road closure
-        </label>
-
-        <button id="planButton" onclick="planRoute()">
-          FIND INTELLIGENT ROUTE
-        </button>
-
-        <p class="muted">
-          Road conditions and hospital availability shown by this prototype
-          are simulated. Use a specific starting place for better results.
+    <section class="page-heading">
+        <h1>Emergency Route Planning Dashboard</h1>
+        <p>
+            Explore alternative routes, compare estimated travel times,
+            and review mapped road information for emergency journeys.
         </p>
-      </div>
-
-      <div class="panel">
-        <h2>Decision Intelligence</h2>
-        <div id="decision" class="notice">
-          Enter your starting location and select a destination to begin.
-        </div>
-        <div class="stats">
-          <div class="stat">
-            <small>Estimated distance</small>
-            <strong id="distance">—</strong>
-          </div>
-          <div class="stat">
-            <small>Estimated time</small>
-            <strong id="duration">—</strong>
-          </div>
-          <div class="stat">
-            <small>Routes returned</small>
-            <strong id="routes">—</strong>
-          </div>
-        </div>
-        <p id="method" class="muted"></p>
-      </div>
     </section>
 
-    <section>
-      <div class="panel">
-        <h2>Live Route View</h2>
-        <div id="map"></div>
-        <div class="legend">
-          <span>🔵 Route</span>
-          <span>🚑 Simulated ambulance</span>
-          <span>📍 Selected locations</span>
-        </div>
-        <button id="moveButton" onclick="animateAmbulance()" disabled>
-          SIMULATE AMBULANCE MOVEMENT
-        </button>
-        <p class="muted">
-          The ambulance marker moves along the selected route as a demo.
-          It does not represent a real ambulance or GPS position.
-        </p>
-      </div>
+    <div id="statusMessage" class="status" role="status"
+         aria-live="polite"></div>
 
-      <div class="panel">
-        <h2>Hospital-Aware Planning</h2>
-        <div id="hospitalInfo" class="notice">
-          Hospital availability is sample data for demonstration only.
-        </div>
-        <p class="muted">
-          A real deployment would need verified hospital capacity,
-          ambulance GPS, and trustworthy traffic and road-closure feeds.
-        </p>
-      </div>
-    </section>
-  </div>
+    <div class="layout">
+
+        <!-- LEFT: INPUT PANEL -->
+        <aside>
+
+            <section class="card">
+                <h2>1. Select Emergency Vehicle</h2>
+
+                <div class="vehicle-options">
+
+                    <label class="vehicle-option">
+                        <input
+                            type="radio"
+                            name="vehicleType"
+                            value="ambulance"
+                            checked
+                        >
+                        <span class="vehicle-icon">🚑</span>
+                        Ambulance
+                    </label>
+
+                    <label class="vehicle-option">
+                        <input
+                            type="radio"
+                            name="vehicleType"
+                            value="fire_engine"
+                        >
+                        <span class="vehicle-icon">🚒</span>
+                        Fire Engine
+                    </label>
+
+                </div>
+            </section>
+
+            <!-- AMBULANCE INPUTS -->
+            <section class="card" id="ambulancePanel">
+
+                <h2>2. Ambulance Starting Location</h2>
+
+                <div class="workflow-note">
+                    <strong>Stage 1:</strong> Ambulance starting location
+                    → patient location.<br>
+                    <strong>Stage 2:</strong> Patient location
+                    → suitable hospital.
+                </div>
+
+                <div class="field">
+                    <label for="ambulanceStart">
+                        Enter Ambulance Starting Location
+                    </label>
+
+                    <input
+                        type="text"
+                        id="ambulanceStart"
+                        placeholder="e.g. Gandhipuram, Coimbatore"
+                    >
+
+                    <button
+                        type="button"
+                        class="btn-gps"
+                        style="margin-top:8px"
+                        onclick="getGPSLocation('ambulanceStart')"
+                    >
+                        📍 Use My GPS Location
+                    </button>
+
+                    <span class="help-text">
+                        GPS works only when the browser permits location
+                        access. Manual entry is also available.
+                    </span>
+                </div>
+
+                <h2 style="margin-top:24px">
+                    3. Patient Location
+                </h2>
+
+                <div class="field">
+                    <label for="patientLocation">
+                        Enter Patient / Incident Location
+                    </label>
+
+                    <input
+                        type="text"
+                        id="patientLocation"
+                        placeholder="e.g. Peelamedu, Coimbatore"
+                    >
+
+                    <button
+                        type="button"
+                        class="btn-gps"
+                        style="margin-top:8px"
+                        onclick="getGPSLocation('patientLocation')"
+                    >
+                        📍 Use My GPS Location
+                    </button>
+                </div>
+
+                <div class="field">
+                    <label for="facility">
+                        Required Hospital Facility
+                    </label>
+
+                    <select id="facility">
+                        <option value="general_emergency">
+                            General Emergency Care
+                        </option>
+
+                        <option value="trauma_care">
+                            Trauma Care
+                        </option>
+
+                        <option value="cardiac_care">
+                            Cardiac Care
+                        </option>
+
+                        <option value="any">
+                            No Specific Facility Preference
+                        </option>
+                    </select>
+
+                    <span class="help-text">
+                        The prototype checks its configured hospital
+                        profiles. It does not verify current hospital
+                        capacity or availability.
+                    </span>
+                </div>
+
+            </section>
+
+            <!-- FIRE ENGINE INPUTS -->
+            <section class="card hidden" id="firePanel">
+
+                <h2>2. Fire Engine Starting Point</h2>
+
+                <div class="workflow-note">
+                    The fire engine starts from the fire station configured
+                    in the backend. You do not need to select a station.
+                </div>
+
+                <p id="fireStationName">
+                    Configured station:
+                    Coimbatore Fire Station - Gopalapuram Area
+                </p>
+
+                <h2 style="margin-top:24px">
+                    3. Fire Incident Location
+                </h2>
+
+                <div class="field">
+                    <label for="fireLocation">
+                        Enter Fire Incident Location
+                    </label>
+
+                    <input
+                        type="text"
+                        id="fireLocation"
+                        placeholder="e.g. RS Puram, Coimbatore"
+                    >
+
+                    <button
+                        type="button"
+                        class="btn-gps"
+                        style="margin-top:8px"
+                        onclick="getGPSLocation('fireLocation')"
+                    >
+                        📍 Use My GPS Location
+                    </button>
+                </div>
+
+            </section>
+
+            <!-- ROUTE PREFERENCES -->
+            <section class="card">
+
+                <h2>4. Route Preferences</h2>
+
+                <div class="checkbox-row">
+                    <input
+                        type="checkbox"
+                        id="avoidLocalRoads"
+                    >
+
+                    <label for="avoidLocalRoads">
+                        Prefer avoiding smaller/local roads when possible
+                    </label>
+                </div>
+
+                <p class="help-text">
+                    This preference affects the prototype's route ranking.
+                    It does not confirm road width, clearance, or access.
+                </p>
+
+                <button
+                    type="button"
+                    class="btn-primary btn-full"
+                    id="planButton"
+                    onclick="planRoute()"
+                >
+                    Find and Compare Routes
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-secondary btn-full"
+                    style="margin-top:10px"
+                    onclick="resetDashboard()"
+                >
+                    Reset
+                </button>
+
+            </section>
+
+        </aside>
+
+        <!-- RIGHT: MAP AND RESULTS -->
+        <section>
+
+            <section class="card map-card">
+                <div class="section-title">
+                    <h2>Route Map</h2>
+                    <span class="badge badge-neutral">
+                        OpenStreetMap
+                    </span>
+                </div>
+
+                <div id="map"></div>
+
+                <div class="map-caption">
+                    Map routes are supplied by an external routing service.
+                    Displayed estimates are not live traffic predictions.
+                </div>
+            </section>
+
+            <section class="card">
+
+                <div class="section-title">
+                    <h2>Optimization Dashboard</h2>
+                </div>
+
+                <div class="dashboard">
+
+                    <div class="metric">
+                        <div class="metric-label">
+                            Recommended Distance
+                        </div>
+                        <div class="metric-value" id="distanceMetric">
+                            --
+                        </div>
+                        <div class="metric-unit">kilometres</div>
+                    </div>
+
+                    <div class="metric">
+                        <div class="metric-label">
+                            Estimated Planning Time
+                        </div>
+                        <div class="metric-value" id="timeMetric">
+                            --
+                        </div>
+                        <div class="metric-unit">minutes</div>
+                    </div>
+
+                    <div class="metric">
+                        <div class="metric-label">
+                            Alternatives Found
+                        </div>
+                        <div class="metric-value" id="routeCountMetric">
+                            --
+                        </div>
+                        <div class="metric-unit">routes</div>
+                    </div>
+
+                </div>
+
+                <div id="journeySummary" class="workflow-note hidden"></div>
+
+                <div id="resultsEmpty" class="empty-state">
+                    Enter the required locations and select
+                    <strong>Find and Compare Routes</strong>
+                    to view route options here.
+                </div>
+
+            </section>
+
+            <section class="card">
+
+                <div class="section-title">
+                    <h2 id="routesHeading">Alternative Routes</h2>
+                </div>
+
+                <div id="routeResults" class="route-list">
+                    <div class="empty-state">
+                        No route results yet.
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="card hidden" id="hospitalResultsCard">
+
+                <h2>Hospital Comparison</h2>
+
+                <p class="help-text" style="margin-bottom:14px">
+                    Hospitals are ranked using the backend's route score
+                    and configured facility profile.
+                </p>
+
+                <div id="hospitalResults" class="hospital-list"></div>
+
+            </section>
+
+            <section class="card">
+
+                <h2>How Route Ranking Works</h2>
+
+                <p style="line-height:1.7;color:var(--muted);font-size:14px">
+                    The current prototype compares route estimates using
+                    planning time, distance, road-class penalties and
+                    possible restrictions found in mapped road tags.
+                    Routes with flagged restrictions are heavily penalized.
+                    Missing map information does not mean a road is safe.
+                </p>
+
+                <div class="disclaimer">
+                    <strong>Research prototype only:</strong>
+                    This website is not a validated emergency dispatch
+                    system. It does not supply verified live traffic,
+                    confirmed road closures, real-time hospital capacity,
+                    or guaranteed emergency-vehicle access. Confirm routes
+                    and hospital availability through appropriate official
+                    channels before any real-world use.
+                </div>
+
+            </section>
+
+        </section>
+
+    </div>
 </main>
 
 <footer>
-  QuantumRoute Student Prototype · OpenStreetMap / OSRM routing
-  · Demonstration only, not for real emergency dispatch
+    QuantumRoute | Student Research Prototype
 </footer>
 
+<!-- Leaflet JavaScript -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-  const map = L.map("map").setView([11.0168, 76.9558], 12);
+    // ==========================================
+    // MAP INITIALIZATION
+    // ==========================================
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(map);
+    const map = L.map("map").setView(
+        [11.0168, 76.9558],
+        12
+    );
 
-  let routeLine = null;
-  let startMarker = null;
-  let endMarker = null;
-  let ambulanceMarker = null;
-  let routePoints = [];
-  let animationTimer = null;
-  let animationFrame = null;
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap contributors"
+        }
+    ).addTo(map);
 
-  function setMessage(message, warning = false) {
-    const box = document.getElementById("decision");
-    box.textContent = message;
-    box.className = warning ? "notice warning" : "notice";
-  }
+    let routeLayers = [];
+    let mapMarkers = [];
 
-  async function planRoute() {
-    const button = document.getElementById("planButton");
-    button.disabled = true;
-    button.textContent = "PLANNING ROUTE…";
-    setMessage("Searching for a road route…");
+    // ==========================================
+    // VEHICLE SELECTION
+    // ==========================================
 
-    if (routeLine) map.removeLayer(routeLine);
-    if (startMarker) map.removeLayer(startMarker);
-    if (endMarker) map.removeLayer(endMarker);
-    if (ambulanceMarker) map.removeLayer(ambulanceMarker);
-    if (animationTimer) clearInterval(animationTimer);
-    if (animationFrame) cancelAnimationFrame(animationFrame);
+    function getVehicleType() {
+        const selected = document.querySelector(
+            'input[name="vehicleType"]:checked'
+        );
 
-    routeLine = startMarker = endMarker = ambulanceMarker = null;
-    routePoints = [];
-    document.getElementById("moveButton").disabled = true;
-    document.getElementById("distance").textContent = "—";
-    document.getElementById("duration").textContent = "—";
-    document.getElementById("routes").textContent = "—";
-
-    try {
-      const response = await fetch("/api/plan", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          start: document.getElementById("start").value,
-          destination: document.getElementById("destination").value,
-          emergency: document.getElementById("emergency").value,
-          traffic: document.getElementById("traffic").checked ? "yes" : "no",
-          blocked: document.getElementById("blocked").checked ? "yes" : "no"
-        })
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Route planning failed.");
-
-      // OSRM GeoJSON coordinates are [longitude, latitude].
-      routePoints = result.geometry.coordinates.map(point => [point[1], point[0]]);
-
-      routeLine = L.polyline(routePoints, {
-        color: "#20d9ff", weight: 6, opacity: 0.9
-      }).addTo(map);
-
-      startMarker = L.marker(routePoints[0])
-        .addTo(map).bindPopup("Starting location").openPopup();
-
-      endMarker = L.marker(routePoints[routePoints.length - 1])
-        .addTo(map).bindPopup(result.destination);
-
-      ambulanceMarker = L.marker(routePoints[0], {
-        icon: L.divIcon({
-          className: "",
-          html: '<div style="font-size:25px">🚑</div>',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        })
-      }).addTo(map);
-
-      map.fitBounds(routeLine.getBounds(), {padding: [25, 25]});
-
-      document.getElementById("distance").textContent = result.km + " km";
-      document.getElementById("duration").textContent = result.minutes + " min*";
-      document.getElementById("routes").textContent = result.routes_found;
-
-      setMessage(result.reason, !result.hospital_available_demo);
-      document.getElementById("method").textContent =
-        result.method + ". *Estimated route time, not live traffic.";
-
-      document.getElementById("hospitalInfo").textContent =
-        result.destination + ": " +
-        (result.hospital_available_demo
-          ? "marked available in demo data."
-          : "marked unavailable in demo data. Please choose another hospital.");
-
-      document.getElementById("moveButton").disabled = false;
-    } catch (error) {
-      setMessage(error.message, true);
-      document.getElementById("hospitalInfo").textContent =
-        "Could not check the demo hospital data for this request.";
-    } finally {
-      button.disabled = false;
-      button.textContent = "FIND INTELLIGENT ROUTE";
+        return selected ? selected.value : "ambulance";
     }
-  }
 
-  function animateAmbulance() {
-    if (routePoints.length < 2 || !ambulanceMarker) return;
+    function updateVehiclePanel() {
+        const vehicle = getVehicleType();
 
-    if (animationTimer) clearInterval(animationTimer);
-    if (animationFrame) cancelAnimationFrame(animationFrame);
+        document.getElementById("ambulancePanel")
+            .classList.toggle(
+                "hidden",
+                vehicle !== "ambulance"
+            );
 
-    let index = 0;
-    const total = routePoints.length;
-    ambulanceMarker.setLatLng(routePoints[0]);
+        document.getElementById("firePanel")
+            .classList.toggle(
+                "hidden",
+                vehicle !== "fire_engine"
+            );
 
-    // Move through the road-route coordinates as a visual simulation.
-    animationTimer = setInterval(() => {
-      index++;
-      if (index >= total) {
-        clearInterval(animationTimer);
-        animationTimer = null;
-        ambulanceMarker.setLatLng(routePoints[total - 1]);
-        return;
-      }
-      ambulanceMarker.setLatLng(routePoints[index]);
-    }, Math.max(20, Math.min(100, 5000 / total)));
-  }
+        document.getElementById("hospitalResultsCard")
+            .classList.add("hidden");
+
+        clearResults();
+    }
+
+    document.querySelectorAll(
+        'input[name="vehicleType"]'
+    ).forEach(function (radio) {
+        radio.addEventListener(
+            "change",
+            updateVehiclePanel
+        );
+    });
+
+    // ==========================================
+    // STATUS MESSAGE
+    // ==========================================
+
+    function showStatus(message, type = "info") {
+        const status = document.getElementById(
+            "statusMessage"
+        );
+
+        status.textContent = message;
+        status.className = "status " + type;
+    }
+
+    function hideStatus() {
+        const status = document.getElementById(
+            "statusMessage"
+        );
+
+        status.textContent = "";
+        status.className = "status";
+    }
+
+    // ==========================================
+    // GPS LOCATION
+    // ==========================================
+
+    function getGPSLocation(inputId) {
+        if (!navigator.geolocation) {
+            showStatus(
+                "GPS is not supported by this browser. Please enter the location manually.",
+                "error"
+            );
+            return;
+        }
+
+        showStatus(
+            "Requesting location permission...",
+            "info"
+        );
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                // Backend accepts GPS coordinates as [longitude, latitude].
+                const input = document.getElementById(inputId);
+
+                input.dataset.latitude = latitude;
+                input.dataset.longitude = longitude;
+                input.dataset.gps = "true";
+
+                input.value =
+                    "GPS Location (" +
+                    latitude.toFixed(5) +
+                    ", " +
+                    longitude.toFixed(5) +
+                    ")";
+
+                showStatus(
+                    "GPS location captured. Select Find and Compare Routes to continue.",
+                    "success"
+                );
+
+                map.setView(
+                    [latitude, longitude],
+                    14
+                );
+
+                L.circleMarker(
+                    [latitude, longitude],
+                    {
+                        radius: 8,
+                        color: "#16845b",
+                        fillColor: "#16845b",
+                        fillOpacity: 0.8
+                    }
+                ).addTo(map)
+                    .bindPopup("GPS location captured")
+                    .openPopup();
+            },
+
+            function (error) {
+                let message =
+                    "Could not obtain GPS location. Please enter a location manually.";
+
+                if (error.code === error.PERMISSION_DENIED) {
+                    message =
+                        "Location permission was denied. Enable permission or enter the location manually.";
+                } else if (
+                    error.code === error.POSITION_UNAVAILABLE
+                ) {
+                    message =
+                        "Your location is currently unavailable. Please enter it manually.";
+                } else if (
+                    error.code === error.TIMEOUT
+                ) {
+                    message =
+                        "GPS request timed out. Please try again or enter the location manually.";
+                }
+
+                showStatus(message, "error");
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    }
+
+    // If a user edits a GPS-filled input, use the manual text instead.
+    [
+        "ambulanceStart",
+        "patientLocation",
+        "fireLocation"
+    ].forEach(function (id) {
+        const input = document.getElementById(id);
+
+        input.addEventListener("input", function () {
+            input.dataset.gps = "false";
+            delete input.dataset.latitude;
+            delete input.dataset.longitude;
+        });
+    });
+
+    function getLocationPayload(inputId) {
+        const input = document.getElementById(inputId);
+        const isGPS = input.dataset.gps === "true";
+
+        if (
+            isGPS &&
+            input.dataset.latitude &&
+            input.dataset.longitude
+        ) {
+            return {
+                location: "",
+                coordinates: [
+                    Number(input.dataset.longitude),
+                    Number(input.dataset.latitude)
+                ]
+            };
+        }
+
+        return {
+            location: input.value.trim(),
+            coordinates: null
+        };
+    }
+
+    // ==========================================
+    // CLEAR MAP AND RESULTS
+    // ==========================================
+
+    function clearMap() {
+        routeLayers.forEach(function (layer) {
+            map.removeLayer(layer);
+        });
+
+        mapMarkers.forEach(function (marker) {
+            map.removeLayer(marker);
+        });
+
+        routeLayers = [];
+        mapMarkers = [];
+    }
+
+    function clearResults() {
+        document.getElementById("distanceMetric")
+            .textContent = "--";
+
+        document.getElementById("timeMetric")
+            .textContent = "--";
+
+        document.getElementById("routeCountMetric")
+            .textContent = "--";
+
+        document.getElementById("journeySummary")
+            .classList.add("hidden");
+
+        document.getElementById("resultsEmpty")
+            .classList.remove("hidden");
+
+        document.getElementById("routeResults")
+            .innerHTML =
+            '<div class="empty-state">No route results yet.</div>';
+
+        document.getElementById("hospitalResults")
+            .innerHTML = "";
+
+        document.getElementById("hospitalResultsCard")
+            .classList.add("hidden");
+
+        clearMap();
+    }
+
+    function resetDashboard() {
+        document.getElementById("ambulanceStart").value = "";
+        document.getElementById("patientLocation").value = "";
+        document.getElementById("fireLocation").value = "";
+
+        [
+            "ambulanceStart",
+            "patientLocation",
+            "fireLocation"
+        ].forEach(function (id) {
+            const input = document.getElementById(id);
+
+            input.dataset.gps = "false";
+
+            delete input.dataset.latitude;
+            delete input.dataset.longitude;
+        });
+
+        document.getElementById("facility").value =
+            "general_emergency";
+
+        document.getElementById("avoidLocalRoads")
+            .checked = false;
+
+        document.querySelector(
+            'input[name="vehicleType"][value="ambulance"]'
+        ).checked = true;
+
+        updateVehiclePanel();
+        hideStatus();
+
+        map.setView([11.0168, 76.9558], 12);
+    }
+
+    // ==========================================
+    // REQUEST ROUTE PLANNING
+    // ==========================================
+
+    async function planRoute() {
+        hideStatus();
+
+        const vehicle = getVehicleType();
+        const avoidLocalRoads = document.getElementById(
+            "avoidLocalRoads"
+        ).checked;
+
+        let payload = {
+            vehicle_type: vehicle,
+            avoid_local_roads: avoidLocalRoads
+        };
+
+        if (vehicle === "ambulance") {
+            const start = getLocationPayload(
+                "ambulanceStart"
+            );
+
+            const patient = getLocationPayload(
+                "patientLocation"
+            );
+
+            if (!start.location && !start.coordinates) {
+                showStatus(
+                    "Enter the ambulance starting location or use GPS.",
+                    "error"
+                );
+                return;
+            }
+
+            if (!patient.location && !patient.coordinates) {
+                showStatus(
+                    "Enter the patient location or use GPS.",
+                    "error"
+                );
+                return;
+            }
+
+            payload.start = start.location;
+            payload.start_coordinates = start.coordinates;
+
+            payload.incident_location = patient.location;
+            payload.incident_coordinates = patient.coordinates;
+
+            payload.required_facility = document.getElementById(
+                "facility"
+            ).value;
+
+        } else {
+            const incident = getLocationPayload(
+                "fireLocation"
+            );
+
+            if (
+                !incident.location &&
+                !incident.coordinates
+            ) {
+                showStatus(
+                    "Enter the fire incident location or use GPS.",
+                    "error"
+                );
+                return;
+            }
+
+            payload.incident_location = incident.location;
+            payload.incident_coordinates = incident.coordinates;
+        }
+
+        const button = document.getElementById("planButton");
+
+        button.disabled = true;
+        button.textContent = "Comparing Routes...";
+
+        showStatus(
+            "Requesting route options and screening mapped road information. This may take a little time.",
+            "info"
+        );
+
+        try {
+            const response = await fetch("/api/plan", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    "Route planning failed. Please try again."
+                );
+            }
+
+            clearMap();
+
+            if (vehicle === "ambulance") {
+                displayAmbulanceResults(result);
+            } else {
+                displayFireResults(result);
+            }
+
+            showStatus(
+                "Route comparison completed. Review the route warnings before interpreting the results.",
+                "success"
+            );
+
+        } catch (error) {
+            showStatus(
+                error.message ||
+                "Could not plan the route. Check your internet connection and try again.",
+                "error"
+            );
+
+        } finally {
+            button.disabled = false;
+            button.textContent = "Find and Compare Routes";
+        }
+    }
+
+    // ==========================================
+    // DISPLAY AMBULANCE RESULTS
+    // ==========================================
+
+    function displayAmbulanceResults(result) {
+        const patientRoutes = result.patient_routes || [];
+        const hospitalRoutes = result.hospital_routes || [];
+
+        document.getElementById("routesHeading")
+            .textContent = "Stage 1: Ambulance to Patient";
+
+        document.getElementById("resultsEmpty")
+            .classList.add("hidden");
+
+        document.getElementById("hospitalResultsCard")
+            .classList.remove("hidden");
+
+        const patientBest = result.best_patient_route;
+
+        const summary = document.getElementById(
+            "journeySummary"
+        );
+
+        summary.classList.remove("hidden");
+
+        summary.innerHTML = "";
+
+        const firstLine = document.createElement("p");
+        firstLine.textContent =
+            "Stage 1: " + result.start +
+            " → " + result.patient_location;
+
+        const secondLine = document.createElement("p");
+        secondLine.textContent =
+            "Stage 2: Patient → " + result.destination;
+
+        summary.appendChild(firstLine);
+        summary.appendChild(secondLine);
+
+        document.getElementById("distanceMetric")
+            .textContent =
+            patientBest.distance_km.toFixed(2);
+
+        document.getElementById("timeMetric")
+            .textContent =
+            patientBest.planning_time_min;
+
+        document.getElementById("routeCountMetric")
+            .textContent =
+            patientRoutes.length;
+
+        displayRoutes(
+            patientRoutes,
+            result.start_coordinates,
+            result.patient_coordinates,
+            "ambulance"
+        );
+
+        displayHospitalCandidates(
+            result.hospital_candidates || [],
+            result.destination
+        );
+
+        // Add the selected hospital route to the map as well.
+        drawRouteSet(
+            hospitalRoutes,
+            result.patient_coordinates,
+            result.destination_coordinates,
+            "hospital"
+        );
+
+        addMarker(
+            result.start_coordinates,
+            "Ambulance starting location"
+        );
+
+        addMarker(
+            result.patient_coordinates,
+            "Patient location"
+        );
+
+        addMarker(
+            result.destination_coordinates,
+            "Selected hospital: " + result.destination
+        );
+
+        fitMapToRoutes();
+    }
+
+    // ==========================================
+    // DISPLAY FIRE ENGINE RESULTS
+    // ==========================================
+
+    function displayFireResults(result) {
+        const routes = result.routes || [];
+
+        document.getElementById("routesHeading")
+            .textContent = "Fire Station to Incident Routes";
+
+        document.getElementById("resultsEmpty")
+            .classList.add("hidden");
+
+        document.getElementById("hospitalResultsCard")
+            .classList.add("hidden");
+
+        const best = result.best_route;
+
+        document.getElementById("distanceMetric")
+            .textContent = best.distance_km.toFixed(2);
+
+        document.getElementById("timeMetric")
+            .textContent = best.planning_time_min;
+
+        document.getElementById("routeCountMetric")
+            .textContent = routes.length;
+
+        const summary = document.getElementById(
+            "journeySummary"
+        );
+
+        summary.classList.remove("hidden");
+
+        summary.textContent =
+            "Fire engine: " + result.start +
+            " → " + result.destination;
+
+        displayRoutes(
+            routes,
+            result.start_coordinates,
+            result.destination_coordinates,
+            "fire"
+        );
+
+        addMarker(
+            result.start_coordinates,
+            "Configured fire station"
+        );
+
+        addMarker(
+            result.destination_coordinates,
+            "Fire incident location"
+        );
+
+        fitMapToRoutes();
+    }
+
+    // ==========================================
+    // ROUTE CARDS
+    // ==========================================
+
+    function displayRoutes(
+        routes,
+        startCoordinates,
+        destinationCoordinates,
+        routeType
+    ) {
+        const container = document.getElementById(
+            "routeResults"
+        );
+
+        container.innerHTML = "";
+
+        if (!routes.length) {
+            container.innerHTML =
+                '<div class="empty-state">No routes were returned.</div>';
+            return;
+        }
+
+        routes.forEach(function (route, index) {
+            const card = document.createElement("article");
+
+            card.className =
+                "route-card" + (index === 0 ? " best" : "");
+
+            const header = document.createElement("div");
+            header.className = "route-top";
+
+            const title = document.createElement("div");
+            title.className = "route-name";
+            title.textContent =
+                "Route " + route.route_number;
+
+            const badge = document.createElement("span");
+
+            if (index === 0) {
+                badge.className = "badge badge-best";
+                badge.textContent = "Top-ranked route";
+            } else if (route.potential_restriction) {
+                badge.className = "badge badge-warning";
+                badge.textContent = "Potential restriction";
+            } else {
+                badge.className = "badge badge-neutral";
+                badge.textContent = "Alternative";
+            }
+
+            header.appendChild(title);
+            header.appendChild(badge);
+
+            card.appendChild(header);
+
+            const metrics = document.createElement("div");
+            metrics.className = "route-metrics";
+
+            metrics.appendChild(
+                createMetric(
+                    route.distance_km.toFixed(2),
+                    "Distance (km)"
+                )
+            );
+
+            metrics.appendChild(
+                createMetric(
+                    route.planning_time_min,
+                    "Planning time (min)"
+                )
+            );
+
+            metrics.appendChild(
+                createMetric(
+                    route.score,
+                    "Ranking score"
+                )
+            );
+
+            card.appendChild(metrics);
+
+            const detail = document.createElement("div");
+            detail.className = "route-detail";
+
+            const roadTypes =
+                route.road_types_found &&
+                route.road_types_found.length
+                    ? route.road_types_found.join(", ")
+                    : "No nearby road classes confirmed";
+
+            const restrictionText =
+                route.restriction_flags &&
+                route.restriction_flags.length
+                    ? route.restriction_flags.join("; ")
+                    : "No restriction tag detected by this screening";
+
+            detail.textContent =
+                "Road types: " + roadTypes +
+                ". Screening: " +
+                (
+                    route.suitability_label ||
+                    "Suitability not verified"
+                ) +
+                ". Details: " + restrictionText + ".";
+
+            card.appendChild(detail);
+
+            const actions = document.createElement("div");
+            actions.className = "route-actions";
+
+            const showButton = document.createElement("button");
+            showButton.className = "btn-primary";
+            showButton.textContent = "Show on Map";
+
+            showButton.addEventListener("click", function () {
+                highlightRoute(route, index);
+            });
+
+            actions.appendChild(showButton);
+
+            const externalButton = document.createElement("button");
+            externalButton.className = "btn-secondary";
+            externalButton.textContent = "Open Directions";
+
+            externalButton.addEventListener("click", function () {
+                openDirections(
+                    startCoordinates,
+                    destinationCoordinates
+                );
+            });
+
+            actions.appendChild(externalButton);
+            card.appendChild(actions);
+
+            container.appendChild(card);
+        });
+
+        // Draw the routes in the map.
+        drawRouteSet(
+            routes,
+            startCoordinates,
+            destinationCoordinates,
+            routeType
+        );
+    }
+
+    function createMetric(value, label) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "route-metric";
+
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+
+        const span = document.createElement("span");
+        span.textContent = label;
+
+        wrapper.appendChild(strong);
+        wrapper.appendChild(span);
+
+        return wrapper;
+    }
+
+    // ==========================================
+    // MAP ROUTE DRAWING
+    // ==========================================
+
+    function drawRouteSet(
+        routes,
+        startCoordinates,
+        destinationCoordinates,
+        routeType
+    ) {
+        routes.forEach(function (route, index) {
+            if (
+                !route.geometry ||
+                !route.geometry.coordinates
+            ) {
+                return;
+            }
+
+            const latLngs = route.geometry.coordinates.map(
+                function (coordinate) {
+                    return [
+                        coordinate[1],
+                        coordinate[0]
+                    ];
+                }
+            );
+
+            const layer = L.polyline(
+                latLngs,
+                {
+                    color: index === 0 ? "#16845b" : "#6384ad",
+                    weight: index === 0 ? 6 : 4,
+                    opacity: index === 0 ? 0.9 : 0.55
+                }
+            ).addTo(map);
+
+            layer.bindPopup(
+                "Route " + route.route_number +
+                "<br>Distance: " +
+                route.distance_km + " km" +
+                "<br>Planning time: " +
+                route.planning_time_min + " min"
+            );
+
+            layer.routeNumber = route.route_number;
+            layer.routeIndex = index;
+            layer.routeType = routeType;
+
+            routeLayers.push(layer);
+        });
+    }
+
+    function highlightRoute(route, index) {
+        routeLayers.forEach(function (layer) {
+            const isSelected =
+                layer.routeNumber === route.route_number;
+
+            layer.setStyle({
+                color: isSelected ? "#e63946" : "#6384ad",
+                weight: isSelected ? 7 : 4,
+                opacity: isSelected ? 1 : 0.45
+            });
+
+            if (isSelected) {
+                layer.openPopup();
+            }
+        });
+
+        if (
+            route.geometry &&
+            route.geometry.coordinates
+        ) {
+            const points =
+                route.geometry.coordinates.map(
+                    function (coordinate) {
+                        return [
+                            coordinate[1],
+                            coordinate[0]
+                        ];
+                    }
+                );
+
+            if (points.length) {
+                map.fitBounds(points, {
+                    padding: [25, 25]
+                });
+            }
+        }
+    }
+
+    function addMarker(coordinates, label) {
+        if (
+            !coordinates ||
+            coordinates.length !== 2
+        ) {
+            return;
+        }
+
+        const marker = L.marker([
+            coordinates[1],
+            coordinates[0]
+        ]).addTo(map);
+
+        marker.bindPopup(label);
+        mapMarkers.push(marker);
+    }
+
+    function fitMapToRoutes() {
+        const layers = [
+            ...routeLayers,
+            ...mapMarkers
+        ];
+
+        if (!layers.length) {
+            return;
+        }
+
+        const group = L.featureGroup(layers);
+
+        map.fitBounds(
+            group.getBounds(),
+            {
+                padding: [30, 30],
+                maxZoom: 14
+            }
+        );
+    }
+
+    // ==========================================
+    // HOSPITAL COMPARISON
+    // ==========================================
+
+    function displayHospitalCandidates(
+        hospitals,
+        selectedHospital
+    ) {
+        const container = document.getElementById(
+            "hospitalResults"
+        );
+
+        container.innerHTML = "";
+
+        if (!hospitals.length) {
+            container.innerHTML =
+                '<div class="empty-state">No matching hospital candidates were returned.</div>';
+            return;
+        }
+
+        hospitals.forEach(function (hospital) {
+            const item = document.createElement("div");
+            item.className = "hospital-item";
+
+            const title = document.createElement("strong");
+            title.textContent = hospital.name;
+
+            if (hospital.name === selectedHospital) {
+                title.textContent += " — Selected";
+            }
+
+            const distance = document.createElement("p");
+            distance.textContent =
+                "Distance: " + hospital.distance_km + " km";
+
+            const time = document.createElement("p");
+            time.textContent =
+                "Estimated planning time: " +
+                hospital.planning_time_min + " minutes";
+
+            const facilities = document.createElement("p");
+            facilities.textContent =
+                "Configured facilities: " +
+                (
+                    hospital.facilities &&
+                    hospital.facilities.length
+                        ? hospital.facilities.join(", ")
+                        : "Not specified"
+                );
+
+            const warning = document.createElement("p");
+            warning.textContent = hospital.has_warning
+                ? "Warning: a possible route restriction was flagged."
+                : "No restriction tag detected; route safety remains unverified.";
+
+            item.appendChild(title);
+            item.appendChild(distance);
+            item.appendChild(time);
+            item.appendChild(facilities);
+            item.appendChild(warning);
+
+            container.appendChild(item);
+        });
+    }
+
+    // ==========================================
+    // OPEN EXTERNAL DIRECTIONS
+    // ==========================================
+
+    function openDirections(start, destination) {
+        if (
+            !start ||
+            !destination ||
+            start.length !== 2 ||
+            destination.length !== 2
+        ) {
+            showStatus(
+                "Coordinates are unavailable for these directions.",
+                "error"
+            );
+            return;
+        }
+
+        const url =
+            "https://www.openstreetmap.org/directions" +
+            "?engine=fossgis_osrm_car" +
+            "&route=" +
+            start[1] + "%2C" + start[0] +
+            "%3B" +
+            destination[1] + "%2C" + destination[0];
+
+        window.open(
+            url,
+            "_blank",
+            "noopener,noreferrer"
+        );
+    }
+
+    // ==========================================
+    // INITIAL PAGE STATE
+    // ==========================================
+
+    updateVehiclePanel();
 </script>
+
 </body>
 </html>
